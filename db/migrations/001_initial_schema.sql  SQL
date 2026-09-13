@@ -1,0 +1,54 @@
+-- ==============================================================================
+-- TRINITY OMNI-CORE: MIGRATION 001 - INITIAL SCHEMA (PostgreSQL)
+-- ==============================================================================
+
+-- 1. TABUĽKA: Používatelia (Users)
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    role VARCHAR(20) DEFAULT 'user',
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Index pre rýchle vyhľadávanie prihlasovania
+CREATE INDEX idx_users_email ON users(email);
+
+-- 2. TABUĽKA: Nastavenia (Settings)
+-- Využíva JSONB pre flexibilné ukladanie používateľských preferencií
+CREATE TABLE IF NOT EXISTS user_settings (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    setting_key VARCHAR(100) NOT NULL,
+    setting_value JSONB NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, setting_key)
+);
+
+-- 3. TABUĽKA: Logy (System Logs)
+-- Slúži na auditovanie prístupov a kritických akcií
+CREATE TABLE IF NOT EXISTS system_logs (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    action VARCHAR(100) NOT NULL,
+    metadata JSONB,
+    ip_address VARCHAR(45),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexy pre analytiku logov
+CREATE INDEX idx_logs_user_id ON system_logs(user_id);
+CREATE INDEX idx_logs_action ON system_logs(action);
+CREATE INDEX idx_logs_created_at ON system_logs(created_at);
+
+-- ==============================================================================
+-- DOWN MIGRATION (Rollback)
+-- ==============================================================================
+/*
+DROP TABLE IF EXISTS system_logs;
+DROP TABLE IF EXISTS user_settings;
+DROP TABLE IF EXISTS users;
+*/
