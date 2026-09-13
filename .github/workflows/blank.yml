@@ -1,0 +1,225 @@
+import os
+
+# --- TRINITY FILES ---
+FILES = {
+    "main.py": """
+from core.core_main import TrinityCore
+from aura.aura_local import AuraLocal
+
+if __name__ == "__main__":
+    core = TrinityCore()
+    aura = AuraLocal(core)
+    aura.start()
+""",
+
+    "core/core_main.py": """
+from core.command_router import CommandRouter
+from core.state_manager import StateManager
+from core.security_engine import SecurityEngine
+from core.logger import Logger
+
+class TrinityCore:
+    def __init__(self):
+        self.state = StateManager()
+        self.security = SecurityEngine()
+        self.logger = Logger()
+        self.router = CommandRouter(self)
+
+    def execute(self, command: str):
+        self.logger.log(f"Received command: {command}")
+
+        if not self.security.check(command):
+            return "SECURITY BLOCK: Command denied."
+
+        result = self.router.route(command)
+        self.logger.log(f"Result: {result}")
+        return result
+""",
+
+    "core/command_router.py": """
+from modules.nlp.nlp_main import NLPModule
+from modules.file.file_main import FileModule
+from modules.security.security_main import SecurityModule
+from modules.ui.ui_main import UIModule
+from modules.autodev.autodev_main import AutoDevModule
+
+class CommandRouter:
+    def __init__(self, core):
+        self.core = core
+        self.modules = {
+            "nlp": NLPModule(),
+            "file": FileModule(),
+            "security": SecurityModule(),
+            "ui": UIModule(),
+            "autodev": AutoDevModule()
+        }
+
+    def route(self, command: str):
+        if command.startswith("nlp."):
+            return self.modules["nlp"].handle(command)
+        if command.startswith("file."):
+            return self.modules["file"].handle(command)
+        if command.startswith("security."):
+            return self.modules["security"].handle(command)
+        if command.startswith("ui."):
+            return self.modules["ui"].handle(command)
+        if command.startswith("autodev."):
+            return self.modules["autodev"].handle(command)
+
+        return "Unknown command."
+""",
+
+    "core/state_manager.py": """
+class StateManager:
+    def __init__(self):
+        self.state = {}
+
+    def set(self, key, value):
+        self.state[key] = value
+
+    def get(self, key):
+        return self.state.get(key, None)
+""",
+
+    "core/security_engine.py": """
+class SecurityEngine:
+    def check(self, command: str):
+        blocked = ["rm -rf", "delete_system", "format_disk"]
+        return not any(b in command for b in blocked)
+""",
+
+    "core/logger.py": """
+class Logger:
+    def log(self, text: str):
+        with open("trinity.log", "a") as f:
+            f.write(text + "\\n")
+""",
+
+    "modules/nlp/nlp_main.py": """
+from modules.nlp.intent_parser import IntentParser
+from modules.nlp.text_generator import TextGenerator
+
+class NLPModule:
+    def __init__(self):
+        self.parser = IntentParser()
+        self.generator = TextGenerator()
+
+    def handle(self, command: str):
+        intent = self.parser.parse(command)
+        return self.generator.generate(intent)
+""",
+
+    "modules/nlp/intent_parser.py": """
+class IntentParser:
+    def parse(self, command: str):
+        return command.replace("nlp.", "")
+""",
+
+    "modules/nlp/text_generator.py": """
+class TextGenerator:
+    def generate(self, intent: str):
+        return f"Generated text for intent: {intent}"
+""",
+
+    "modules/file/file_main.py": """
+from modules.file.file_ops import FileOps
+from modules.file.project_builder import ProjectBuilder
+
+class FileModule:
+    def __init__(self):
+        self.ops = FileOps()
+        self.builder = ProjectBuilder()
+
+    def handle(self, command: str):
+        if "create_project" in command:
+            name = command.split("=")[1]
+            return self.builder.create(name)
+        return self.ops.execute(command)
+""",
+
+    "modules/file/file_ops.py": """
+import os
+
+class FileOps:
+    def execute(self, command: str):
+        if "file.read" in command:
+            path = command.split("=")[1]
+            return open(path).read()
+        if "file.write" in command:
+            _, path, text = command.split("|")
+            with open(path, "w") as f:
+                f.write(text)
+            return "File written."
+        return "Unknown file operation."
+""",
+
+    "modules/file/project_builder.py": """
+import os
+
+class ProjectBuilder:
+    def create(self, name: str):
+        os.makedirs(name, exist_ok=True)
+        return f"Project '{name}' created."
+""",
+
+    "modules/security/security_main.py": """
+class SecurityModule:
+    def handle(self, command: str):
+        return "Security module active."
+""",
+
+    "modules/ui/ui_main.py": """
+class UIModule:
+    def handle(self, command: str):
+        return "UI module executed."
+""",
+
+    "modules/autodev/autodev_main.py": """
+from modules.autodev.code_generator import CodeGenerator
+from modules.autodev.version_manager import VersionManager
+
+class AutoDevModule:
+    def __init__(self):
+        self.gen = CodeGenerator()
+        self.ver = VersionManager()
+
+    def handle(self, command: str):
+        if "autodev.gen" in command:
+            return self.gen.generate()
+        return self.ver.version()
+""",
+
+    "modules/autodev/code_generator.py": """
+class CodeGenerator:
+    def generate(self):
+        return "Auto-generated code."
+""",
+
+    "modules/autodev/version_manager.py": """
+class VersionManager:
+    def version(self):
+        return "Version 1.0"
+""",
+
+    "aura/aura_local.py": """
+class AuraLocal:
+    def __init__(self, core):
+        self.core = core
+
+    def start(self):
+        print("AURA Local ready.")
+        while True:
+            cmd = input(">> ")
+            print(self.core.execute(cmd))
+"""
+}
+
+# --- CREATE FILES ---
+for path, content in FILES.items():
+    folder = os.path.dirname(path)
+    if folder:
+        os.makedirs(folder, exist_ok=True)
+    with open(path, "w") as f:
+        f.write(content)
+
+print("TRINITY PROJECT GENERATED SUCCESSFULLY.")
