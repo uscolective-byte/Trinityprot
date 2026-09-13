@@ -1,0 +1,109 @@
+"use client";
+
+import React from "react";
+import Link from "next/link";
+import { Cpu, Shield, Terminal, Code, Database, Globe, ChevronRight, Zap, Layers } from "lucide-react";
+
+export default function TrinityHomepage() {
+  return (
+    <div className="min-h-screen bg-black text-emerald-400 font-mono flex flex-col selection:bg-emerald-900 selection:text-emerald-100">
+      
+      {/* Návigačný panel */}
+      <nav className="border-b border-emerald-950/60 bg-black/50 backdrop-blur-md sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <Cpu className="w-6 h-6 text-emerald-500 animate-pulse" />
+            <span className="font-bold text-xl tracking-widest text-white">TRINITY</span>
+          </div>
+          <div className="hidden md:flex gap-8 text-sm text-zinc-400">
+            <a href="#architektura" className="hover:text-emerald-400 transition-colors">Architektúra</a>
+            <a href="#agenti" className="hover:text-emerald-400 transition-colors">Sub-Agenti</a>
+            <a href="#ustava" className="hover:text-emerald-400 transition-colors">Ústava</a>
+          </div>
+          <Link href="/dashboard" className="border border-emerald-700 bg-emerald-950/30 hover:bg-emerald-900/50 text-emerald-300 px-4 py-2 rounded text-sm transition-all flex items-center gap-2">
+            <Terminal className="w-4 h-4" /> Spustiť AURA
+          </Link>
+        </div>
+      </nav>
+
+      {/* Hero Sekcia */}
+      <main className="flex-1">
+        <section className="max-w-7xl mx-auto px-6 py-24 md:py-32 flex flex-col items-center text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-950/40 border border-emerald-800/50 text-xs text-emerald-500 mb-8">
+            <Zap className="w-3 h-3 fill-current" /> OMNI-CORE V3.0 ONLINE
+          </div>
+          <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight mb-6">
+            Absolútna <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-500">Kontrola.</span><br />
+            Autonómna Evolúcia.
+          </h1>
+          <p className="max-w-2xl text-zinc-400 text-lg md:text-xl mb-10 leading-relaxed">
+            TRINITY je centrálny multi-agentový riadiaci systém poháňaný Google ADK. Zjednocuje tvorbu kódu, bezpečnosť, výskum a databázovú architektúru do jedného nezávislého celku.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+            <Link href="/dashboard" className="bg-emerald-600 hover:bg-emerald-500 text-black font-bold px-8 py-4 rounded flex items-center justify-center gap-2 transition-transform hover:scale-105 shadow-[0_0_20px_rgba(16,185,129,0.3)]">
+              Inicializovať Systém <ChevronRight className="w-5 h-5" />
+            </Link>
+            <a href="#architektura" className="border border-zinc-800 hover:border-emerald-700 text-zinc-300 hover:text-emerald-400 bg-zinc-900/50 px-8 py-4 rounded flex items-center justify-center gap-2 transition-all">
+              Technická Špecifikácia
+            </a>
+          </div>
+        </section>
+
+        {/* Sekcia Agentov */}
+        <section id="agenti" className="border-t border-emerald-950/50 bg-zinc-950/30 py-24">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl font-bold text-white mb-4">Hierarchia 6 Sub-Agentov</h2>
+              <p className="text-zinc-500 max-w-2xl mx-auto">Každý agent operuje vo svojom úzko špecializovanom kontexte pod prísnym dohľadom centrálneho orchestrátora.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <FeatureCard 
+                icon={<Code />} title="App Builder Agent" 
+                desc="Generuje kompletné multi-file projektové štruktúry a full-stack aplikačný kód. Fyzicky zapisuje na disk." 
+              />
+              <FeatureCard 
+                icon={<Globe />} title="DevOps & Deploy Agent" 
+                desc="Špecializuje sa na Git workflowy, CI/CD automatizáciu, Docker kontajnery a cloud deployment." 
+              />
+              <FeatureCard 
+                icon={<Layers />} title="Research Agent" 
+                desc="Využíva Google Search a URL kontext pre syntézu technickej dokumentácie v reálnom čase." 
+              />
+              <FeatureCard 
+                icon={<Shield />} title="Security Audit Agent" 
+                desc="Vykonáva bezpečnostný audit kódu, chráni súkromie a odhaľuje zraniteľnosti (Constitution Guard)." 
+              />
+              <FeatureCard 
+                icon={<Terminal />} title="QA Test Agent" 
+                desc="Vytvára robustné testovacie suity, E2E validácie a rieši komplexné ladiace procedúry." 
+              />
+              <FeatureCard 
+                icon={<Database />} title="Database Architect" 
+                desc="Navrhuje SQL/NoSQL schémy, optimalizuje queries a vytvára bezpečné databázové migrácie." 
+              />
+            </div>
+          </div>
+        </section>
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-zinc-900 bg-black py-8 text-center text-xs text-zinc-600">
+        <p>© 2026 TRINITY OMNI-CORE // Vytvorené pre absolútnu autonómiu.</p>
+      </footer>
+    </div>
+  );
+}
+
+// Komponent pre karty agentov
+function FeatureCard({ icon, title, desc }: { icon: React.ReactNode, title: string, desc: string }) {
+  return (
+    <div className="p-6 rounded-xl border border-zinc-900 bg-black hover:border-emerald-800/50 transition-colors group">
+      <div className="w-12 h-12 rounded bg-zinc-900 border border-zinc-800 flex items-center justify-center text-emerald-500 mb-4 group-hover:bg-emerald-950/50 group-hover:border-emerald-700 transition-colors">
+        {icon}
+      </div>
+      <h3 className="text-lg font-bold text-white mb-2">{title}</h3>
+      <p className="text-zinc-500 text-sm leading-relaxed">{desc}</p>
+    </div>
+  );
+}
