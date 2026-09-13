@@ -1,0 +1,155 @@
+import os
+
+print("--- [TRINITY CORE] INICIALIZUJEM ABSOLÚTNU VÝSTAVBU ---")
+
+FILES = {
+    # 1. KONFIGURÁCIA
+    "package.json": r'''{
+  "name": "trinity-omni-core",
+  "version": "5.0.0",
+  "private": true,
+  "scripts": { "dev": "next dev", "build": "next build", "start": "next start" },
+  "dependencies": { "next": "14.2.15", "react": "18.3.1", "react-dom": "18.3.1", "lucide-react": "0.453.0", "clsx": "2.1.1", "tailwind-merge": "2.5.4" },
+  "devDependencies": { "typescript": "5.6.3", "@types/node": "20.16.11", "tailwindcss": "3.4.13", "autoprefixer": "10.4.20", "postcss": "8.4.47" }
+}''',
+
+    "requirements.txt": "google-adk>=0.1.0\ngoogle-genai>=0.1.1\nflask>=3.0.0\nrequests>=2.31.0\nflask-cors>=4.0.0\n",
+
+    # 2. PYTHON AI ENGINE
+    "agent_engine/main.py": r'''
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from agents import root_agent
+
+app = Flask(__name__)
+CORS(app)
+
+@app.route("/api/execute", methods=["POST"])
+def execute():
+    prompt = request.json.get("prompt")
+    try:
+        response = root_agent.run(prompt)
+        return jsonify({"status": "SUCCESS", "result": str(response)})
+    except Exception as e:
+        return jsonify({"status": "ERROR", "message": str(e)})
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8000)
+''',
+
+    "agent_engine/agents.py": r'''
+from functools import cached_property
+from google.adk.agents import LlmAgent
+from google.adk.models import Gemini
+from google.genai import Client
+
+class GlobalGemini(Gemini):
+    @cached_property
+    def api_client(self) -> Client:
+        return Client(vertexai=True, location="global")
+
+root_agent = LlmAgent(
+    name='TRINITY_Core', 
+    model=GlobalGemini(model='gemini-1.5-flash'),
+    instruction='You are TRINITY Core, the ultimate AI orchestrator. Manage sub-agents and build projects.'
+)
+''',
+
+    # 3. CORE LOGIC & CONSTITUTION
+    "core/constitution.ts": r'''
+export const validateActionAgainstConstitution = (action: string) => {
+    const forbidden = ["rm -rf", "drop database"];
+    if (forbidden.some(b => action.toLowerCase().includes(b))) return { allowed: false, reason: "Banned operation." };
+    return { allowed: true };
+};
+''',
+
+    "core/orchestrator.ts": r'''
+import { validateActionAgainstConstitution } from "./constitution";
+
+export class TrinityOrchestrator {
+    public async executeTask(userGoal: string) {
+        const safety = validateActionAgainstConstitution(userGoal);
+        if (!safety.allowed) return { success: false, finalAnswer: safety.reason };
+
+        const res = await fetch("http://localhost:8000/api/execute", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt: userGoal })
+        });
+        const data = await res.json();
+        return { success: true, finalAnswer: data.result, steps: [{ stepNumber: 1, thought: "Orchestrating..." }] };
+    }
+}
+''',
+
+    # 4. AURA DASHBOARD (FRONTEND)
+    "app/page.tsx": r'''
+"use client";
+import React, { useState } from "react";
+import { Cpu, Terminal, Play } from "lucide-react";
+
+export default function Dashboard() {
+  const [prompt, setPrompt] = useState("");
+  const [logs, setLogs] = useState(["[SYSTEM] TRINITY CORE ONLINE"]);
+
+  const run = async () => {
+    setLogs(p => [...p, `> ${prompt}`]);
+    const res = await fetch("/api/agent", { method: "POST", body: JSON.stringify({ prompt }) });
+    const data = await res.json();
+    setLogs(p => [...p, `✔ ${data.data.finalAnswer}`]);
+  };
+
+  return (
+    <div className="min-h-screen bg-black text-emerald-500 font-mono p-10">
+      <h1 className="text-3xl font-bold mb-10 flex items-center gap-4"><Cpu className="animate-pulse"/> TRINITY OMNI-CORE</h1>
+      <div className="grid grid-cols-3 gap-10">
+        <div className="col-span-1 bg-zinc-950 p-6 border border-emerald-900">
+          <h2 className="mb-4 flex items-center gap-2"><Terminal size={18}/> CONSOLE</h2>
+          <textarea value={prompt} onChange={e => setPrompt(e.target.value)} className="w-full bg-black border border-emerald-900 p-2 text-emerald-400 h-40"/>
+          <button onClick={run} className="w-full bg-emerald-700 text-black font-bold py-3 mt-4 hover:bg-emerald-400 transition-all flex items-center justify-center gap-2">
+            <Play size={18} fill="black"/> EXECUTE
+          </button>
+        </div>
+        <div className="col-span-2 bg-zinc-950 p-6 border border-emerald-900 h-[600px] overflow-y-auto text-xs">
+          {logs.map((l, i) => <div key={i} className="mb-2">{l}</div>)}
+        </div>
+      </div>
+    </div>
+  );
+}
+''',
+
+    "app/api/agent/route.ts": r'''
+import { NextResponse } from "next/server";
+import { TrinityOrchestrator } from "../../../core/orchestrator";
+const orchestrator = new TrinityOrchestrator();
+export async function POST(req: Request) {
+    const { prompt } = await req.json();
+    const result = await orchestrator.executeTask(prompt);
+    return NextResponse.json({ status: "SUCCESS", data: result });
+}
+''',
+
+    # 5. AUTOMATIZOVANÝ ŠTART
+    "setup.sh": r'''#!/usr/bin/env bash
+echo "--- INSTALLING TRINITY ---"
+pip install -r requirements.txt
+npm install
+python3 agent_engine/main.py &
+npm run dev
+'''
+}
+
+# VYTVORENIE ŠTRUKTÚRY
+for path, content in FILES.items():
+    folder = os.path.dirname(path)
+    if folder: os.makedirs(folder, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(content.strip())
+
+if os.name == 'posix': os.chmod("setup.sh", 0o755)
+
+print("\n--- [VÝSLEDOK] TRINITY OMNI-CORE BOLA POSTAVENÁ ---")
+print("1. Spusti: python3 assemble_trinity.py")
+print("2. Spusti: bash setup.sh")
